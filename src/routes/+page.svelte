@@ -1,18 +1,47 @@
 <script lang="ts">
   import "$lib/styles.pcss";
+  import CopyButton from "./copy-button.svelte";
 
   let url: string = "";
   let generatedUrl = "";
+  let generatedCss = "";
   let copied = false;
   let urlError: string | null = null;
 
-  let colors = [
-    { label: "Main color", key: "mainColor", color: "#ff0000" },
-    { label: "Background color", key: "bgColor", color: "#ff0000" },
-    { label: "Dark theme color", key: "colorDark", color: "#ff0000" },
-    { label: "Medium theme color ", key: "colorMedium", color: "#ff0000" },
-    { label: "Light theme color", key: "colorLight", color: "#ff0000" },
+  const initialColors = [
+    {
+      label: "Main color",
+      key: "mainColor",
+      color: "#ff0000",
+      cssKey: "--primary-color",
+    },
+    {
+      label: "Background color",
+      key: "bgColor",
+      color: "#ff0000",
+      cssKey: "--body-bg-color",
+    },
+    {
+      label: "Dark theme color",
+      key: "colorDark",
+      color: "#ff0000",
+      cssKey: "--main-theme-color-dark",
+    },
+    {
+      label: "Medium theme color ",
+      key: "colorMedium",
+      color: "#ff0000",
+      cssKey: "--main-theme-color-medium",
+    },
+    {
+      label: "Light theme color",
+      key: "colorLight",
+      color: "#ff0000",
+      cssKey: "--main-theme-light",
+    },
   ];
+
+  let colors = [...initialColors];
 
   let state: "pending" | "loading" | "generated" = "pending";
 
@@ -27,6 +56,10 @@
 
       _url.search = searchParams.toString();
       generatedUrl = _url.toString();
+      generatedCss = `
+.saas{
+  ${colors.map((color) => `${color.cssKey}: ${color.color};`).join("\n  ")}
+}`;
 
       state = "generated";
     } catch (error) {
@@ -46,13 +79,7 @@
     urlError = null;
     generatedUrl = "";
     copied = false;
-    colors = [
-      { label: "Main color", key: "mainColor", color: "#ff0000" },
-      { label: "Background color", key: "bgColor", color: "#ff0000" },
-      { label: "Dark theme color", key: "colorDark", color: "#ff0000" },
-      { label: "Medium theme color ", key: "colorMedium", color: "#ff0000" },
-      { label: "Light theme color", key: "colorLight", color: "#ff0000" },
-    ];
+    colors = [...initialColors];
     state = "pending";
   }
 </script>
@@ -67,14 +94,14 @@
   <div class="w-full max-w-xl">
     <label
       for="company-website"
-      class="block text-sm font-medium leading-6 text-gray-900">Base URL</label
+      class="block text-sm font-medium leading-6 text-slate-900">Base URL</label
     >
     <div class="mt-2">
       <div
-        class="flex rounded-md shadow-sm ring-1 ring-inset ring-gray-300 focus-within:ring-2 focus-within:ring-inset focus-within:ring-cyan-600 sm:max-w-xl w-full"
+        class="flex rounded-md shadow-sm ring-1 ring-inset ring-slate-300 focus-within:ring-2 focus-within:ring-inset focus-within:ring-cyan-600 sm:max-w-xl w-full"
       >
         <span
-          class="flex select-none items-center pl-3 text-gray-500 sm:text-sm"
+          class="flex select-none items-center pl-3 text-slate-500 sm:text-sm"
           >https://</span
         >
         <input
@@ -82,7 +109,7 @@
           bind:value={url}
           name="company-website"
           id="company-website"
-          class="block flex-1 border-0 bg-transparent py-1.5 pl-1 text-gray-900 placeholder:text-gray-400 focus:ring-0 sm:text-sm sm:leading-6 w-full"
+          class="block flex-1 border-0 bg-transparent py-1.5 pl-1 text-slate-900 placeholder:text-slate-400 focus:ring-0 sm:text-sm sm:leading-6 w-full"
           placeholder="www.example.com"
         />
       </div>
@@ -97,7 +124,7 @@
       <div>
         <label
           for="color-{index}"
-          class="block text-sm font-medium leading-6 text-gray-900"
+          class="block text-sm font-medium leading-6 text-slate-900"
           >{color.label}</label
         >
         <div class="mt-2">
@@ -105,7 +132,7 @@
             type="color"
             bind:value={color.color}
             id="color-{index}"
-            class="block w-full rounded-md border-0 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-cyan-600 sm:text-sm sm:leading-6"
+            class="block w-full rounded-md border-0 text-slate-900 shadow-sm ring-1 ring-inset ring-slate-300 placeholder:text-slate-400 focus:ring-2 focus:ring-inset focus:ring-cyan-600 sm:text-sm sm:leading-6"
           />
         </div>
       </div>
@@ -123,7 +150,7 @@
     {:else if state === "loading"}
       <button
         type="button"
-        class="rounded-md col-span-2 bg-gray-300 px-3 w-full py-3 text-sm font-semibold text-gray-600 shadow-sm cursor-not-allowed flex items-center justify-center gap-4"
+        class="rounded-md col-span-2 bg-slate-300 px-3 w-full py-3 text-sm font-semibold text-slate-600 shadow-sm cursor-not-allowed flex items-center justify-center gap-4"
         disabled
       >
         <svg
@@ -144,14 +171,21 @@
       >
     {:else if state === "generated"}
       <div
-        class="col-span-2 py-2 px-3 rounded border border-slate-300 bg-slate-50 text-slate-600"
+        class="col-span-2 py-2 px-3 rounded border border-slate-300 bg-slate-50 text-slate-600 overflow-hidden line-clamp-2 relative"
       >
         {generatedUrl}
+        <CopyButton text={generatedUrl}></CopyButton>
       </div>
+      <pre
+        class="rounded border col-span-2 border-slate-300 bg-slate-50 px-3 relative">
+        {generatedCss}
+        <CopyButton text={generatedCss}></CopyButton>
+
+      </pre>
       <button
         on:click={handleReset}
         type="button"
-        class="rounded-md bg-white px-3 py-2 text-sm font-semibold text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 hover:bg-gray-50 flex items-center justify-center gap-4"
+        class="rounded-md bg-white px-3 py-2 text-sm font-semibold text-slate-900 shadow-sm ring-1 ring-inset ring-slate-300 hover:bg-slate-50 flex items-center justify-center gap-4"
       >
         <svg
           xmlns="http://www.w3.org/2000/svg"
